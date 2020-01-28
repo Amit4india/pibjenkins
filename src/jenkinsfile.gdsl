@@ -1,0 +1,112 @@
+pipeline {
+    agent any
+    parameters {
+        choice(
+                choices: ['init' , 'validate', 'plan' , 'apply', 'destroy'],
+                description: 'Select want you want to do', name: 'terraformOption'
+        )
+    }
+    stages {
+        stage ('terraform version check') {
+            steps {
+                sh 'terraform --version'
+            }
+        }
+        stage ('Code checkout'){
+            steps {
+                cleanWs()
+                git	(
+                        branch: 'asrivastava/awshcl',
+                        url:'https://repo.hclets.com/dna-pib/WSO2.git',
+                        credentialsId: 'gitaccessUI'
+                )
+
+            }
+        }
+        stage('Terraform init') {
+//            when {
+//                // Only say hello if a "greeting" is requested
+//                expression { params.terraformOption == 'init' }
+//            }
+            steps {
+                withAWS(credentials: 'awsaccesskey') {
+                    sh '''
+                    cd WSO2Terraform/services/WSO2
+                    terraform init
+                    '''
+
+                }
+
+            }
+        }
+        stage('Terraform validate') {
+            when {
+                // Only say hello if a "greeting" is requested
+                expression { params.terraformOption == 'validate' }
+            }
+            steps {
+                withAWS(credentials: 'awsaccesskey') {
+                    sh '''
+                    cd WSO2Terraform/services/WSO2
+                    terraform validate
+                    '''
+
+                }
+
+            }
+        }
+
+        stage('Terraform plan') {
+            when {
+                // Only say hello if a "greeting" is requested
+                expression { params.terraformOption == 'plan' }
+            }
+            steps {
+                withAWS(credentials: 'awsaccesskey') {
+                    sh '''
+                    cd WSO2Terraform/services/WSO2
+                    terraform plan 
+                    '''
+
+                }
+
+            }
+        }
+        stage('Terraform apply') {
+            when {
+                // Only say hello if a "greeting" is requested
+                expression { params.terraformOption == 'apply' }
+            }
+            steps {
+                withAWS(credentials: 'awsaccesskey') {
+                    sh '''
+                    cd WSO2Terraform/services/WSO2
+                    terraform apply -auto-approve
+                    '''
+
+                }
+
+            }
+        }
+
+        stage('Terraform destroy') {
+            when {
+                // Only say hello if a "greeting" is requested
+                expression { params.terraformOption == 'destroy' }
+            }
+            steps {
+                withAWS(credentials: 'awsaccesskey') {
+                    sh '''
+                    cd WSO2Terraform/services/WSO2
+                    terraform destroy -auto-approve
+                    '''
+
+                }
+
+            }
+        }
+
+
+    }
+}
+
